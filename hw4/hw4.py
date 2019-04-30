@@ -75,7 +75,17 @@ def init(points_list, k):
     ###########################################################################
     # TODO: Implement the function. compute init values for w, mu, sigma.     #
     ###########################################################################
-    pass
+    w = (1/k)* np.ones(k)
+    sigma = np.ones(k)
+    
+    indexes = np.random.randint(len(points_list),size = k)
+    for i in range(len(indexes)-1):
+        mu = np.append(mu,points_list[indexes[i]])
+        
+    
+    
+    
+   
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
@@ -83,6 +93,17 @@ def init(points_list, k):
     return w, mu, sigma
 
 
+def normal_pdf(x, mean, std):
+  
+   
+    denominator = np.sqrt(2 * np.pi * np.square(std))
+    first_part = 1 / denominator
+    exponent = -(np.square(x - mean)) / (2*np.square(std))
+    second_part = np.exp(exponent)
+    normal_pdf = first_part * second_part
+    return normal_pdf
+    
+    
 def expectation(points_list, mu, sigma, w):
     """
     :param points_list: the entire data set of points. type: list.
@@ -95,7 +116,10 @@ def expectation(points_list, mu, sigma, w):
     ###########################################################################
     # TODO: Implement the function. compute likelihood array                  #
     ###########################################################################
-    pass
+    for i in range (len(points_list)):
+        for j in range (k):
+            likelihood[i,j] = w[j] * normal_pdf(points_list[i],mu[j],sigma[j])
+           
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
