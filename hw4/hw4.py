@@ -55,7 +55,7 @@ def get_num_of_gaussians():
     ###########################################################################
     # TODO: Implement the function.                                           #
     ###########################################################################
-    pass
+    k = 4
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
@@ -69,17 +69,16 @@ def init(points_list, k):
     :param k: number of gaussians. type: integer.
     :return the initial guess of w, mu, sigma. types: array
     """
-    w = np.array([0.0])
-    mu = np.array([0.0])
-    sigma = np.array([0.0])
+    w = np.array([])
+    mu = np.array([])
+    sigma = np.array([])
     ###########################################################################
     # TODO: Implement the function. compute init values for w, mu, sigma.     #
     ###########################################################################
     w = (1/k)* np.ones(k)
-    sigma = np.ones(k)
-    
+    sigma = np.ones(k) 
     indexes = np.random.randint(len(points_list),size = k)
-    for i in range(len(indexes)-1):
+    for i in range(len(indexes)):
         mu = np.append(mu,points_list[indexes[i]])
         
     
@@ -93,9 +92,7 @@ def init(points_list, k):
     return w, mu, sigma
 
 
-def normal_pdf(x, mean, std):
-  
-   
+def get_likelihood(x, mean, std):
     denominator = np.sqrt(2 * np.pi * np.square(std))
     first_part = 1 / denominator
     exponent = -(np.square(x - mean)) / (2*np.square(std))
@@ -111,20 +108,21 @@ def expectation(points_list, mu, sigma, w):
     :param sigma: std for of gaussian. type: array
     :param w: weight of each gaussian. type: array
     :return likelihood: dividend of ranks matrix (likelihood). likelihood[i][j] is the likelihood of point i to belong to gaussian j. type: array
-    """
-    likelihood = np.array([0.0])
+#     """
+    likelihood = np.array([])
     ###########################################################################
     # TODO: Implement the function. compute likelihood array                  #
     ###########################################################################
-    for i in range (len(points_list)):
-        for j in range (k):
-            likelihood[i,j] = w[j] * normal_pdf(points_list[i],mu[j],sigma[j])
-           
+    k = mu.size
+    for point in points_list:
+        for j in range(k):
+            weighted_likelihood = w[j] * get_likelihood(point, mu[j], sigma[j])
+            likelihood = np.append(likelihood, weighted_likelihood) 
+        
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
-
-    return likelihood
+    return likelihood.reshape(3,2)
 
 
 def maximization(points_list, ranks):
@@ -138,14 +136,23 @@ def maximization(points_list, ranks):
             sigma_new: new std parameter of each gaussian
     """
 
-    w_new = np.array([0.0])
-    mu_new = np.array([0.0])
-    sigma_new = np.array([0.0])
+    w_new = np.array([])
+    mu_new = np.array([])
+    sigma_new = np.array([])
 
     ###########################################################################
     # TODO: Implement the function. compute w_new, mu_new, sigma_new          #
     ###########################################################################
-    pass
+    k = len(ranks[0])
+    N = len(points_list)
+    for j in range(k):
+        w_j = np.sum(ranks[:,j]) / N
+        w_new = np.append(w_new, w_j)
+        mu_j = np.sum(points_list * ranks[:,j]) / (w_j * N)
+        mu_new = np.append(mu_new, mu_j)
+        sigma_j = np.sum( ((points_list - mu_j)**2) * ranks[:,j] ) / (w_j * N)
+        sigma_new = np.append(sigma_new, np.sqrt(sigma_j))
+        
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
