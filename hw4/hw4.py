@@ -72,14 +72,17 @@ def init(points_list, k):
     w = np.array([])
     mu = np.array([])
     sigma = np.array([])
+    
+    data = np.array(points_list)
+    sample_len = int(len(data)/k)
     ###########################################################################
     # TODO: Implement the function. compute init values for w, mu, sigma.     #
     ###########################################################################
     w = (1/k)* np.ones(k)
-    sigma = np.ones(k) 
-    indexes = np.random.randint(len(points_list),size = k)
-    for i in range(len(indexes)):
-        mu = np.append(mu,points_list[indexes[i]])
+    
+    for i in range(k):
+        mu = np.append(mu ,data[i*sample_len:(i+1)*(sample_len)].mean())
+        sigma = np.append(sigma ,data[i*sample_len:(i+1)*(sample_len)].std())
         
     
     
@@ -122,7 +125,7 @@ def expectation(points_list, mu, sigma, w):
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
-    return likelihood.reshape(3,2)
+    return likelihood.reshape(len(points_list),k)
 
 
 def maximization(points_list, ranks):
@@ -171,7 +174,10 @@ def calc_max_delta(old_param, new_param):
     ###########################################################################
     # TODO: find the maximal delta between each old and new parameter         #
     ###########################################################################
-    pass
+    for i in range(len(old_param)):
+        delta = (old_param[i]-new_param[i])
+        if(abs(delta) > max_delta):
+            max_delta = float(delta)
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
@@ -211,10 +217,9 @@ def expectation_maximization(points_list, k, max_iter, epsilon):
 
 
     """
-    w = np.array([0.0])
-    mu = np.array([0.0])
-    sigma = np.array([0.0])
+
     # TODO: init values and then remove the 3 lines above
+    w, mu, sigma = init(points_list, k)
 
     # Loop until convergence
     delta = np.infty
@@ -224,21 +229,25 @@ def expectation_maximization(points_list, k, max_iter, epsilon):
     while delta > epsilon and iter_num <= max_iter:
 
         # E step
-        likelihood = None  # TODO: compute likelihood array
+        likelihood = expectation(points_list, mu, sigma, w)  # TODO: compute likelihood array
 
         likelihood_sum = likelihood.sum(axis=1)
         log_likelihood.append(np.sum(np.log(likelihood_sum), axis=0))
 
         # M step
-        ranks = None  # TODO: compute ranks array using the likelihood array
+        ranks = np.zeros(shape=(len(points_list), len(mu)))  # TODO: compute ranks array using the likelihood array
+        for i in range(len(points_list)):
+            for j in range(len(mu)):
+                ranks[i][j] = likelihood[i][j] / likelihood_sum[i]
 
-        w_new, mu_new, sigma_new = None, None, None   # TODO: compute w_new, mu_new, sigma_new
+        w_new, mu_new, sigma_new = maximization(points_list, ranks)   # TODO: compute w_new, mu_new, sigma_new
 
         # Check significant change in parameters
         delta = max(calc_max_delta(w, w_new), calc_max_delta(mu, mu_new), calc_max_delta(sigma, sigma_new))
 
         # TODO: below, set the new values for w, mu, sigma
-
+        w, mu, sigma = w_new, mu_new, sigma_new
+        
         if iter_num % 10 == 0:
             res = ranks.argmax(axis=1)
             plot_gmm(k, res, mu, sigma, points_list, iter_num)
@@ -252,3 +261,5 @@ def expectation_maximization(points_list, k, max_iter, epsilon):
     plot_gmm(k, res, mu, sigma, points_list, iter_num)
 
     return res, mu, sigma, log_likelihood
+
+
